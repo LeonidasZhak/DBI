@@ -1,8 +1,8 @@
 #' @rdname hidden_aliases
 #' @usage NULL
 dbQuoteLiteral_DBIConnection <- function(conn, x, ...) {
-  # Switchpatching to avoid ambiguous S4 dispatch, so that our method
-  # is used only if no alternatives are available.
+  # Switchpatching to avoid ambiguous S4 dispatch,
+  # so that our method is used only if no alternatives are available.
 
   if (is(x, "SQL")) {
     return(x)
@@ -50,16 +50,11 @@ dbQuoteLiteral_DBIConnection <- function(conn, x, ...) {
 
   if (is.double(x)) {
     out <- as.character(x)
-    # Fall back to a longer decimal representation only when the default
-    # formatting does not round-trip to the original double value.
+    # Use a more precise representation only when the default formatting
+    # loses information; general format avoids huge fixed-point edge values.
     needs_precise <- is.finite(x) & (as.numeric(out) != x)
     if (any(needs_precise)) {
-      out[needs_precise] <- formatC(
-        x[needs_precise],
-        digits = 17,
-        format = "fg",
-        flag = "#"
-      )
+      out[needs_precise] <- sprintf("%.17g", x[needs_precise])
     }
     out[is.na(out)] <- "NULL"
     return(SQL(out, names = names(x)))
